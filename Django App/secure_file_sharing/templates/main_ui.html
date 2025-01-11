@@ -1,0 +1,52 @@
+<!-- # ///////////////////////////////////////////////////////////////////////////
+# // File Name: main_ui.html
+# // Group Number: 5
+# // Group Members Names : Anthony, Vinh
+# // Group Members Seneca Email : asamen@myseneca.ca, vmdang@myseneca.ca
+# // Date : 2024-11-20
+# // Authenticity Declaration :
+# // I declare this submission is the result of our group work and has not been
+# // shared with any other groups/students or 3rd party content provider. This submitted
+# // piece of work is entirely of my own creation.
+# ////////////////////////////// -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        div {
+            margin-bottom: 20px; /* Adds space below the links */
+        }
+
+        .content-section {
+            margin-top: 30px; /* Adds space above the button */
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome, {{ user.username }}! To Our Secure File Sharing App</h1>
+    <p>Developed By Ryan And Anthony</p>
+
+    <div>
+        <a href="/upload/">Upload your file here</a>
+    </div>
+    
+    <div>
+        <a href="/view_file/">View your uploaded file(s)</a>
+    </div>
+
+    <div>
+        <a href="/my_files/">Share your files?</a>
+    </div>
+
+    <div class="content-section">
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-light">Logout</button>
+        </form>
+    </div>
+</body>
+</html>

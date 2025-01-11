@@ -1,0 +1,27 @@
+<!-- # ///////////////////////////////////////////////////////////////////////////
+# // File Name: share_file.html
+# // Group Number: 5
+# // Group Members Names : Anthony, Vinh
+# // Group Members Seneca Email : asamen@myseneca.ca, vmdang@myseneca.ca
+# // Date : 2024-11-20
+# // Authenticity Declaration :
+# // I declare this submission is the result of our group work and has not been
+# // shared with any other groups/students or 3rd party content provider. This submitted
+# // piece of work is entirely of my own creation.
+# ////////////////////////////// -->
+
+{%extends "base.html"%}
+{% block content %}
+
+    <h1>
+        Share File: {{ file.name }}
+    </h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="username">Username to share with:</label>
+        <input type="text" name="username" id="username" required>
+        <button type="submit">Share</button>
+    </form>
+
+{% endblock content %}

@@ -1,0 +1,61 @@
+"""
+############################
+#  File Name:
+#  Full Name :
+#  Student ID# :
+#  Email :
+#  Date :
+#  Authenticity Declaration :
+#  I declare this submission is the result of my own work and has not been
+#  shared with any other student or 3rd party content provider.This submitted
+#  piece of work is entirely of my own creation.
+############################
+"""
+
+## TODO: Implement the following class as per the lab instructions
+## Make sure you import the necessary classes
+from Book import Book
+from Member import Member
+from Library import Library
+import unittest
+
+class TestLibrary(unittest.TestCase):
+    # def test_add_book(self,book)
+    #     library = Library()
+    #     book = Book('a','a')
+
+    #     library.add_book(book)
+
+    #     self.assertEqual()
+    
+    # def test_add_member(self,member)
+        
+    def test_borrow_book(self):
+        library = Library()
+        book = Book('a','a')
+        member = Member('s')
+        library.borrow_book(member,book)
+
+        self.assertEqual(book.is_available(),False)
+    
+    def test_borrow_unavailable_book(self):
+        library = Library()
+        book = Book('a','a')
+        member1 = Member('s')
+        member2 = Member('d')
+        library.borrow_book(member1,book)
+
+        with self.assertRaises(ValueError):
+            library.borrow_book(member2,book)
+        
+    def test_return_book(self):
+        library = Library()
+        book = Book('a','a')
+        member = Member('s')
+        library.borrow_book(member,book)
+        library.return_book(member,book)
+
+        self.assertEqual(book.is_available(),True)
+
+if __name__ == '__main__':
+    unittest.main()

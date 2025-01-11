@@ -1,0 +1,185 @@
+from django.shortcuts import render
+from django.http import HttpResponse
+from .forms import UserRegistrationForm
+from django.contrib.auth import login
+from django.shortcuts import redirect
+from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.decorators import login_required
+from cryptography.fernet import Fernet
+from .models import EncryptedFile, FileShare
+import hashlib
+from django.shortcuts import get_object_or_404
+from cryptography.fernet import InvalidToken
+from django.http import HttpResponseForbidden
+from django.contrib.auth.models import User
+from django.db import models
+import os
+from django.contrib import messages
+
+
+
+# Define the path for the encryption key
+key_file_path = os.path.join(os.path.dirname(__file__), 'Secret_key.key')
+
+# Ensure the key is generated only once and reused
+if not os.path.exists(key_file_path):
+    try:
+        key = Fernet.generate_key()
+        with open(key_file_path, 'wb') as key_file:
+            key_file.write(key)
+        print("Encryption key successfully generated and saved.")
+    except Exception as e:
+        print(f"Error saving encryption key: {e}")
+else:
+    print("Encryption key already exists.")
+
+# Load the key for consistent use
+try:
+    with open(key_file_path, 'rb') as key_file:
+        Secret = key_file.read()
+    cipher_suite = Fernet(Secret)
+    print("Encryption key successfully loaded.")
+except Exception as e:
+    print(f"Error loading encryption key: {e}")
+
+
+
+# Create your views here.
+
+@csrf_protect
+def register(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            # Save user and hash the password
+            user = form.save(commit = False)
+            user.set_password(form.cleaned_data['password1'])
+            user.save()
+            # Log the user in
+            login(request, user)
+            # Redirect to the index page
+            return redirect('index')
+    else:  
+        form = UserRegistrationForm()
+    return render (request, 'Registration/Registration.html', {'form': form})
+
+
+
+login_required
+def upload_file(request):
+    try:
+        if request.method == 'POST':
+            # Get the uploaded file from the form
+            uploaded_file = request.FILES.get('file')
+
+            # Encrypt the file content
+            file_content = uploaded_file.read()
+            encrypted_file_data = cipher_suite.encrypt(file_content)
+
+            # Calculate SHA-256 integrity hash
+            integrity_hash = hashlib.sha256(file_content).hexdigest()
+
+            # Save the file metadata and encrypted content to the database
+            encrypted_file = EncryptedFile(
+                creator = request.user,
+                file_name = uploaded_file.name,
+                encrypted_data = encrypted_file_data,
+                integrity_hash=integrity_hash,
+            )
+
+            encrypted_file.save()
+            messages.success(request, f'File "{uploaded_file.name}" uploaded successfully!')
+            return redirect('fileapp:all_files')
+    
+        return render (request, 'file_upload.html')
+    except Exception as e:
+        # Log unexpected errors for debugging
+        print(f"Unexpected error during file download: {e}")
+        return HttpResponse("An unexpected error occurred.", status=500)  
+
+
+
+
+@login_required
+def download_file(request, file_id):
+    try:
+        # Fetch the file and check access permissions
+        encrypted_file = EncryptedFile.objects.filter(
+            models.Q(creator=request.user) | models.Q(shared_files__shared_with=request.user),
+            id=file_id
+        ).distinct().first()
+
+        # Handle case where file is not found
+        if not encrypted_file:
+            return HttpResponseForbidden("You are not authorized to access this file!")
+
+        # Decrypt the file content
+        decrypted_file_data = cipher_suite.decrypt(encrypted_file.encrypted_data)
+
+        # Verify integrity of the file
+        calculated_hash = hashlib.sha256(decrypted_file_data).hexdigest()
+        if calculated_hash != encrypted_file.integrity_hash:
+            return HttpResponse("File integrity compromised!", status=400)
+
+        # Serve the file for download
+        response = HttpResponse(decrypted_file_data, content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{encrypted_file.file_name}"'
+        return response
+
+    except InvalidToken:
+        return HttpResponseForbidden("Invalid encryption key or corrupted file!")
+
+    except Exception as e:
+        # Log unexpected errors
+        print(f"Unexpected error during file download: {e}")
+        return HttpResponse("An unexpected error occurred.", status=500)
+
+
+@login_required
+def share_file(request, file_id):
+    # Fetch the file created by the logged-in user
+    file = get_object_or_404(EncryptedFile, id=file_id, creator=request.user)
+
+    if request.method == 'POST':
+        # Get the username of the user to share the file with
+        username = request.POST.get('username')
+        try:
+            shared_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return HttpResponse("User does not exist.", status=400)
+
+        # Create a FileShare record
+        FileShare.objects.create(
+            file=file,
+            shared_by=request.user,
+            shared_with=shared_user,
+        )
+        return HttpResponse(f"File {file.file_name} shared with {shared_user.username}.")
+
+    return render(request, 'share_file.html', {'file': file})
+
+
+
+
+@login_required
+def shared_files(request):
+    # Get files shared with the logged-in user
+    shared_files = FileShare.objects.filter(shared_with=request.user).select_related('file', 'shared_by')
+    return render(request, 'shared_files.html', {'shared_files': shared_files})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

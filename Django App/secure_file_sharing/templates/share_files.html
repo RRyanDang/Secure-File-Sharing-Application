@@ -1,0 +1,51 @@
+<!-- # ///////////////////////////////////////////////////////////////////////////
+# // File Name: share_files.html
+# // Group Number: 5
+# // Group Members Names : Anthony, Vinh
+# // Group Members Seneca Email : asamen@myseneca.ca, vmdang@myseneca.ca
+# // Date : 2024-11-20
+# // Authenticity Declaration :
+# // I declare this submission is the result of our group work and has not been
+# // shared with any other groups/students or 3rd party content provider. This submitted
+# // piece of work is entirely of my own creation.
+# ////////////////////////////// -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Files</title>
+</head>
+<body>
+    {% if messages %}
+        <ul class="messages">
+    {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h1>My Files</h1>
+    <ul>
+        {% for file in owned_files %}
+            <li>
+                File Name: {{ file.name }}
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="file_id" value="{{ file.id }}">
+                    <input type="text" name="username" placeholder="Username to share with" required>
+                    <button type="submit">Share</button>
+                </form>
+            </li>
+        {% empty %}
+            <p>You have no files.</p>
+        {% endfor %}
+    </ul>
+
+    <div class="content-section">
+        <form action="{% url 'home' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-light">Back to home</button>
+        </form>
+    </div>
+</body>
+</html>
