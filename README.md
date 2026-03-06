@@ -9,6 +9,7 @@ A full-stack web application for securely uploading, storing, and sharing files 
 ## Features
 
 - **AES/Fernet Encryption** — Every uploaded file is encrypted server-side before being written to disk. The encryption key is stored per-file in the database, never exposed to other users.
+- **Django ORM** — Using Django's built-in relational database (database-agnosti), to model objects. 
 - **File Integrity Verification** — A SHA-256 hash of the encrypted file content is computed at upload time and verified on every download. Corrupted or tampered files are rejected.
 - **User Authentication** — Full registration, login, and logout flows using Django's built-in auth system, with all sensitive views protected by `@login_required`.
 - **Secure File Sharing** — File owners can share files with other registered users. A new `FileUpload` record (with the same key and hash) is created for the recipient, giving them isolated ownership without duplicating the ciphertext.
@@ -25,6 +26,7 @@ A full-stack web application for securely uploading, storing, and sharing files 
 | Encryption | `cryptography` (Fernet / AES-128-CBC + HMAC) |
 | Hashing | `hashlib` SHA-256 |
 | Auth | Django `contrib.auth` |
+| ORM | SQLite
 | Testing | Django `TestCase`, `pytest-django` |
 | Storage | Django `FileField` (local filesystem / configurable) |
 
